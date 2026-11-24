@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#702632">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Naam Jap">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Naam Jap — Habit Tracker</title>
+<style>
+:root{color-scheme:light;--bg:#faf5eb;--card:#fffdf8;--ink:#342018;--muted:#876f60;--red:#702632;--saff:#d98732;--gold:#c4a15a;--line:#eadbc8;--green:#477b58}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:560px;margin:auto;padding:18px 15px 50px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:6px 2px 12px}
+h1{font:700 29px Georgia,serif;color:var(--red);margin:0}.sub{font-size:13px;color:var(--muted);margin-top:3px}
+.pill{font-size:12px;padding:7px 10px;border:1px solid var(--line);border-radius:30px;background:var(--card);white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:16px;margin:12px 0;box-shadow:0 5px 18px #53301a0a}
+h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--red);margin:0 0 12px}
+label{display:block;color:var(--muted);font-size:13px;margin:9px 0}
+input,select{display:block;width:100%;margin-top:5px;border:1px solid var(--line);border-radius:11px;background:var(--bg);color:var(--ink);padding:11px;font:inherit;font-size:16px}
+button{border:1px solid var(--line);border-radius:11px;background:var(--card);color:var(--ink);font:inherit;padding:10px 13px;cursor:pointer}
+button.primary{background:var(--saff);border-color:var(--saff);color:white;font-weight:650}
+button:active{transform:scale(.98)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.stat{padding:12px 8px;background:var(--bg);border-radius:13px;text-align:center}
+.stat b{display:block;font-size:22px;font-variant-numeric:tabular-nums}.stat small{font-size:11px;color:var(--muted)}
+.actions{display:flex;gap:8px;margin-top:10px}.actions>*{flex:1}
+.hint,.message{font-size:12px;color:var(--muted);line-height:1.5}.message{color:var(--red);min-height:17px}
+.progress{height:11px;background:var(--line);border-radius:20px;overflow:hidden;margin:8px 0}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--saff),var(--gold));border-radius:20px;transition:width .3s}
+.big{font:700 34px Georgia,serif;color:var(--red);text-align:center;margin:4px 0}
+.center{text-align:center}.targetline{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.chart{height:112px;display:flex;align-items:flex-end;gap:5px;margin:8px 0 0}
+.barcol{height:100%;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0}
+.barcol i{display:block;width:100%;min-height:2px;background:linear-gradient(var(--saff),var(--red));border-radius:6px 6px 2px 2px}
+.barcol small{font-size:10px;color:var(--muted)}
+.day{display:flex;justify-content:space-between;gap:8px;padding:11px 2px;border-top:1px solid var(--line);font-size:13px;cursor:pointer}
+.day span:last-child{text-align:right}.day strong{color:var(--red)}
+details summary{color:var(--red);font-weight:650;cursor:pointer}
+.file{display:block;text-align:center;border:1px solid var(--line);border-radius:11px;padding:10px;font-size:13px}
+.file input{display:none}
+#toast{position:fixed;bottom:18px;left:50%;transform:translate(-50%,100px);background:var(--red);color:white;padding:11px 16px;border-radius:12px;opacity:0;transition:.25s;font-size:13px}
+#toast.show{transform:translate(-50%,0);opacity:1}
+@media(min-width:480px){.stats{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body><main>
+<header><div><h1>Naam Jap</h1><div class="sub">नाम जप · one mindful day at a time</div></div><span class="pill" id="streakPill">🔥 0-day streak</span></header>
+
+<section class="card">
+<h2>Log today's naam jap</h2>
+<div class="grid">
+<label>Date<input id="date" type="date"></label>
+<label>Entry type<select id="mode"><option value="add">Add to this day</option><option value="set">Set day total</option></select></label>
+</div>
+<label>Number of jap<input id="count" type="number" min="0" step="1" inputmode="numeric" placeholder="Enter jap count"></label>
+<div class="hint" id="preview">108 jap = 1 mala</div>
+<button class="primary" id="save" style="width:100%;margin-top:12px">Save jap</button>
+<p class="message" id="message"></p>
+</section>
+
+<section class="card">
+<h2>Today's progress</h2>
+<div class="big" id="todayCount">0</div><div class="center hint">jap completed today</div>
+<div class="progress"><i id="todayBar"></i></div>
+<div class="targetline"><span id="goalLabel">Daily goal: 1,000</span><b id="goalPct">0%</b></div>
+<div class="stats" style="margin-top:14px">
+<div class="stat"><b id="todayMala">0</b><small>malas today</small></div>
+<div class="stat"><b id="totalJap">0</b><small>lifetime jap</small></div>
+<div class="stat"><b id="totalMala">0</b><small>lifetime malas</small></div>
+<div class="stat"><b id="activeDays">0</b><small>days practised</small></div>
+</div>
+</section>
+
+<section class="card">
+<h2>Your consistency</h2>
+<div class="targetline"><span>Current streak</span><b id="currentStreak">0 days</b></div>
+<div class="targetline" style="margin-top:8px"><span>Best streak</span><b id="bestStreak">0 days</b></div>
+<p class="hint">A day counts when you log at least 1 jap. Your streak is based on consecutive calendar days.</p>
+</section>
+
+<section class="card">
+<h2>Progress towards your target</h2>
+<label>Lifetime target (jap)<input id="lifetimeGoal" type="number" min="1" step="1"></label>
+<div class="progress"><i id="lifeBar"></i></div>
+<div class="targetline"><span id="lifeDone">0 completed</span><b id="lifePct">0%</b></div>
+<p class="hint" id="lifeRemaining"></p>
+</section>
+
+<section class="card">
+<h2>Last 14 days</h2><div class="chart" id="chart"></div>
+</section>
+
+<section class="card">
+<h2>Daily history</h2><p class="hint">Tap a date to edit its total.</p><div id="history"></div>
+</section>
+
+<details class="card">
+<summary>Settings & backup</summary>
+<label>Daily jap goal<input id="dailyGoal" type="number" min="1"></label>
+<label>Jap completed before using this app<input id="opening" type="number" min="0"></label>
+<div class="actions"><button class="primary" id="saveSettings">Save settings</button></div>
+<div class="actions"><button id="export">Export backup</button><label class="file">Import backup<input id="import" type="file" accept="application/json"></label></div>
+<p class="hint">Your entries stay in this browser on this device. Export a backup occasionally, especially before changing phones or browsers.</p>
+</details>
+<p class="hint center">Your practice is personal. Track gently; consistency matters more than perfection.</p>
+</main><div id="toast"></div>
+<script>
+const KEY='naam-jap-habit-v2', $=id=>document.getElementById(id), MALA=108;
+const today=()=>new Date().toLocaleDateString('en-CA');
+const shift=(key,n)=>{let d=new Date(key+'T12:00:00');d.setDate(d.getDate()+n);return d.toLocaleDateString('en-CA')};
+const fmt=n=>Math.floor(n||0).toLocaleString('en-IN');
+let state;
+try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!state||!state.days)state={days:{},opening:0,dailyGoal:1000,lifetimeGoal:10000000};
+const saveState=()=>localStorage.setItem(KEY,JSON.stringify(state));
+const total=()=>state.opening+Object.values(state.days).reduce((a,b)=>a+b,0);
+function streaks(){
+ let keys=Object.keys(state.days).filter(k=>state.days[k]>0).sort();
+ let best=0,run=0,prev=null;
+ for(const k of keys){run=prev&&shift(prev,1)===k?run+1:1;best=Math.max(best,run);prev=k}
+ let cur=0,k=today();
+ if(!(state.days[k]>0))k=shift(k,-1);
+ while(state.days[k]>0){cur++;k=shift(k,-1)}
+ return {cur,best};
+}
+function toast(t){$('toast').textContent=t;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2000)}
+function preview(){
+ let n=Math.max(0,Math.floor(Number($('count').value)||0)),d=$('date').value;
+ let val=$('mode').value==='add'?(state.days[d]||0)+n:n;
+ $('preview').textContent=`This entry makes ${fmt(val)} jap for ${d||'selected date'} · ${fmt(Math.floor(val/MALA))} malas + ${val%MALA} jap`;
+}
+function render(){
+ let t=state.days[today()]||0,tot=total(),st=streaks(),goal=state.dailyGoal||1000,life=state.lifetimeGoal||10000000;
+ $('todayCount').textContent=fmt(t);$('todayMala').textContent=fmt(t/MALA);
+ $('totalJap').textContent=fmt(tot);$('totalMala').textContent=fmt(tot/MALA);
+ $('activeDays').textContent=Object.values(state.days).filter(v=>v>0).length;
+ $('todayBar').style.width=Math.min(100,t/goal*100)+'%';$('goalLabel').textContent='Daily goal: '+fmt(goal);$('goalPct').textContent=Math.floor(t/goal*100)+'%';
+ $('streakPill').textContent='🔥 '+st.cur+'-day streak';$('currentStreak').textContent=st.cur+' days';$('bestStreak').textContent=st.best+' days';
+ $('lifetimeGoal').value=life;$('dailyGoal').value=goal;$('opening').value=state.opening||0;
+ $('lifeBar').style.width=Math.min(100,tot/life*100)+'%';$('lifeDone').textContent=fmt(tot)+' completed';$('lifePct').textContent=(tot/life*100).toFixed(2)+'%';$('lifeRemaining').textContent=fmt(Math.max(0,life-tot))+' jap remaining to reach your target.';
+ let days=Array.from({length:14},(_,i)=>shift(today(),i-13)),max=Math.max(1,...days.map(k=>state.days[k]||0));
+ $('chart').innerHTML=days.map(k=>`<div class="barcol" title="${fmt(state.days[k]||0)} jap"><i style="height:${Math.max(2,(state.days[k]||0)/max*100)}%"></i><small>${k.slice(8)}</small></div>`).join('');
+ let keys=Object.keys(state.days).sort().reverse();
+ $('history').innerHTML=keys.length?keys.map(k=>`<div class="day" data-date="${k}"><span>${k}</span><span><strong>${fmt(state.days[k])}</strong> jap · ${fmt(state.days[k]/MALA)} malas</span></div>`).join(''):'<p class="hint">No entries yet. Add your first jap count above.</p>';
+ saveState();
+}
+$('date').value=today();$('date').max=today();
+$('save').onclick=()=>{
+ let raw=$('count').value.trim(),n=Math.floor(Number(raw)),d=$('date').value;
+ if(!raw||!Number.isFinite(n)||n<0){$('message').textContent='Enter a valid jap count.';return}
+ if(!d||d>today()){$('message').textContent='Choose today or an earlier date.';return}
+ let val=$('mode').value==='add'?(state.days[d]||0)+n:n;
+ if(val>0)state.days[d]=val;else delete state.days[d];
+ $('message').textContent='Saved '+fmt(val)+' jap for '+d+'.';$('count').value='';preview();render();toast('Jap count saved');
+};
+$('count').addEventListener('input',preview);$('mode').onchange=preview;$('date').onchange=preview;
+$('history').onclick=e=>{let row=e.target.closest('[data-date]');if(!row)return;$('date').value=row.dataset.date;$('mode').value='set';$('count').value=state.days[row.dataset.date];preview();window.scrollTo({top:0,behavior:'smooth'})};
+$('saveSettings').onclick=()=>{
+ state.dailyGoal=Math.max(1,Math.floor(Number($('dailyGoal').value)||1000));
+ state.opening=Math.max(0,Math.floor(Number($('opening').value)||0));
+ state.lifetimeGoal=Math.max(1,Math.floor(Number($('lifetimeGoal').value)||10000000));
+ render();toast('Settings saved');
+};
+$('export').onclick=()=>{let b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='naam-jap-backup-'+today()+'.json';a.click();URL.revokeObjectURL(a.href)};
+$('import').onchange=async e=>{let f=e.target.files[0];e.target.value='';if(!f)return;try{let s=JSON.parse(await f.text());if(!s||typeof s.days!=='object')throw 0;let days={};for(let [k,v] of Object.entries(s.days))if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&Number.isFinite(v)&&v>0)days[k]=Math.floor(v);state={days,opening:Math.max(0,Number(s.opening)||0),dailyGoal:Math.max(1,Number(s.dailyGoal)||1000),lifetimeGoal:Math.max(1,Number(s.lifetimeGoal)||10000000)};render();preview();toast('Backup imported')}catch(e){toast('Invalid backup file')}};
+render();preview();
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
